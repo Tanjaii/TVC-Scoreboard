@@ -65,6 +65,73 @@ img { max-width: 100%; display: block; }
   animation: beaconPulse 1.7s ease-in-out infinite;
 }
 
+.backend-notice {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.backend-notice.error {
+  color: #ffd7dc;
+  background: rgba(213, 51, 74, 0.16);
+  border-bottom: 1px solid rgba(239, 75, 90, 0.35);
+}
+
+.backend-notice button,
+.admin-signout-button {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 7px 11px;
+  background: rgba(15, 30, 43, 0.9);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.admin-auth-panel {
+  width: min(100% - 32px, 440px);
+  align-self: center;
+  margin: 52px auto;
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow);
+}
+
+.admin-auth-panel h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.admin-auth-copy {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.admin-auth-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.admin-auth-form .decision-button {
+  min-height: 44px;
+}
+
+.admin-auth-form .decision-button:disabled {
+  cursor: wait;
+}
+
+.admin-auth-error {
+  margin: 0;
+  color: #ff9ca8;
+  font-size: 0.85rem;
+}
+
 .app-shell {
   display: flex;
   flex-direction: column;
@@ -1418,6 +1485,10 @@ img { max-width: 100%; display: block; }
   border-radius: 12px;
   background: rgba(15, 30, 43, 0.9);
   color: var(--text);
+}
+
+.admin-signout-button {
+  min-height: 38px;
 }
 
 .admin-user-pill {

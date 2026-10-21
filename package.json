@@ -5,18 +5,27 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "dev:vercel": "npx vercel dev",
+    "build": "tsc -b && tsc -p tsconfig.api.json && vite build",
+    "preview": "vite preview",
+    "auth:migrate": "dotenv -e .env.local -- npx auth@latest migrate --config src/server/auth.ts --yes",
+    "auth:create-admin": "dotenv -e .env.local -- npx auth@latest create-admin --config src/server/auth.ts",
+    "db:migrate": "dotenv -e .env.local -- node scripts/migrate-live-match.mjs",
+    "test:backend": "node --experimental-strip-types --test tests/liveMatchValidation.test.ts"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "better-auth": "^1.7.12",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "dotenv-cli": "^11.0.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.5"
   }

@@ -13,7 +13,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { accessMatrix, decisionLog, overviewStats } from "../data/admin";
+import { decisionLog, overviewStats } from "../data/admin";
 import type { LiveMatchData, MatchStats } from "../data/liveMatch";
 
 const navItems = [
@@ -24,12 +24,11 @@ const navItems = [
   { label: "Settings", icon: Briefcase },
 ] as const;
 
-const seniorAdmins = ["Richard", "Evans", "Obulor"] as const;
-type SeniorAdmin = (typeof seniorAdmins)[number];
-
 type Props = {
   liveMatch: LiveMatchData;
   onLiveMatchChange: (updater: (current: LiveMatchData) => LiveMatchData) => void;
+  currentUser: { name: string; email: string };
+  onSignOut: () => Promise<void>;
 };
 
 const statFields = [
@@ -39,13 +38,17 @@ const statFields = [
   { key: "errors", label: "Errors" },
 ] as const satisfies ReadonlyArray<{ key: keyof MatchStats; label: string }>;
 
-export default function AdminDashboard({ liveMatch, onLiveMatchChange }: Props) {
+export default function AdminDashboard({
+  liveMatch,
+  onLiveMatchChange,
+  currentUser,
+  onSignOut,
+}: Props) {
   const [selectedNav, setSelectedNav] = useState<(typeof navItems)[number]["label"]>("Overview");
-  const [activeUser] = useState<SeniorAdmin | "Scorekeeper" | "Official - Head Ref">("Richard");
+  const activeUser = currentUser.name;
   const [decisions, setDecisions] = useState(() => [...decisionLog]);
 
-  const canAuthorize = seniorAdmins.includes(activeUser as SeniorAdmin) || activeUser === "Official - Head Ref";
-  const canViewReviewAccess = seniorAdmins.includes(activeUser as SeniorAdmin);
+  const canAuthorize = true;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -108,12 +111,10 @@ export default function AdminDashboard({ liveMatch, onLiveMatchChange }: Props) 
           ))}
         </nav>
 
-        {canViewReviewAccess ? (
-          <div className="admin-cta">
-            <p>Review access</p>
-            <strong>Authorized</strong>
-          </div>
-        ) : null}
+        <div className="admin-cta">
+          <p>Account access</p>
+          <strong>Administrator</strong>
+        </div>
       </aside>
 
       <main className="admin-main">
@@ -126,6 +127,13 @@ export default function AdminDashboard({ liveMatch, onLiveMatchChange }: Props) 
           <div className="admin-actions">
             <button type="button" className="admin-icon-button" aria-label="Notifications">
               <Bell size={18} />
+            </button>
+            <button
+              type="button"
+              className="admin-signout-button"
+              onClick={() => void onSignOut()}
+            >
+              Sign out
             </button>
           </div>
         </header>
@@ -160,6 +168,7 @@ export default function AdminDashboard({ liveMatch, onLiveMatchChange }: Props) 
               Home team
               <input
                 value={liveMatch.homeTeam}
+                maxLength={100}
                 onChange={(event) => updateMatch({ homeTeam: event.target.value })}
                 placeholder="Enter home team"
               />
@@ -168,6 +177,7 @@ export default function AdminDashboard({ liveMatch, onLiveMatchChange }: Props) 
               Away team
               <input
                 value={liveMatch.awayTeam}
+                maxLength={100}
                 onChange={(event) => updateMatch({ awayTeam: event.target.value })}
                 placeholder="Enter away team"
               />
@@ -176,6 +186,7 @@ export default function AdminDashboard({ liveMatch, onLiveMatchChange }: Props) 
               Match stage
               <input
                 value={liveMatch.stage}
+                maxLength={100}
                 onChange={(event) => updateMatch({ stage: event.target.value })}
                 placeholder="e.g. Semi-final"
               />
@@ -223,7 +234,7 @@ export default function AdminDashboard({ liveMatch, onLiveMatchChange }: Props) 
           <div className="live-stats-entry">
             <div className="live-stats-heading">
               <h3>Match statistics</h3>
-              <span>Changes update the public scoreboard immediately while broadcasting.</span>
+              <span>The public scoreboard refreshes every five seconds.</span>
             </div>
             <div className="live-stats-table">
               <div className="live-stats-row live-stats-labels">
@@ -361,16 +372,14 @@ export default function AdminDashboard({ liveMatch, onLiveMatchChange }: Props) 
             </div>
 
             <div className="matrix-list">
-              {accessMatrix.map((member) => (
-                <div key={member.role} className="matrix-row">
-                  <div className="matrix-role">
-                    <span className="matrix-dot" />
-                    <strong>{member.role}</strong>
-                  </div>
-                  <span>{member.permissions}</span>
-                  <span className={`member-status ${member.status.toLowerCase()} ${member.status === "Active" || member.status === "Authorised" ? "beacon" : ""}`}>{member.status}</span>
+              <div className="matrix-row">
+                <div className="matrix-role">
+                  <span className="matrix-dot" />
+                  <strong>{currentUser.name}</strong>
                 </div>
-              ))}
+                <span>{currentUser.email}</span>
+                <span className="member-status active">Administrator</span>
+              </div>
             </div>
           </div>
 
