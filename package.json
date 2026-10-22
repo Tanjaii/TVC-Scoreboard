@@ -1,5 +1,5 @@
 {
-  "name": "fitlife-fitness-site",
+  "name": "tvc-scoreboard",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -11,7 +11,7 @@
     "auth:migrate": "dotenv -e .env.local -- npx auth@latest migrate --config src/server/auth.ts --yes",
     "auth:create-admin": "dotenv -e .env.local -- npx auth@latest create-admin --config src/server/auth.ts",
     "db:migrate": "dotenv -e .env.local -- node scripts/migrate-live-match.mjs",
-    "test:backend": "node --experimental-strip-types --test tests/liveMatchValidation.test.ts"
+    "test:backend": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
