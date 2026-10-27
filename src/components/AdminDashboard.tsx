@@ -138,6 +138,7 @@ export default function AdminDashboard({
           </div>
         </header>
 
+        {selectedNav === "Overview" && (
         <section className="overview-grid">
           {overviewStats.map((item) => (
             <article key={item.label} className={`overview-card ${item.tone}`}>
@@ -149,7 +150,9 @@ export default function AdminDashboard({
             </article>
           ))}
         </section>
+        )}
 
+        {(selectedNav === "Overview" || selectedNav === "Matches") && (
         <section className="match-focus">
           <div className="focus-header">
             <div>
@@ -292,7 +295,9 @@ export default function AdminDashboard({
             </button>
           </div>
         </section>
+        )}
 
+        {(selectedNav === "Overview" || selectedNav === "Matches") && (
         <section className="admin-panels">
           <div className="panel panel-large">
             <div className="panel-header-row">
@@ -300,7 +305,7 @@ export default function AdminDashboard({
                 <p className="panel-eyebrow">Matches</p>
                 <h2>Queue monitor</h2>
               </div>
-              <button type="button" className="panel-link">View all</button>
+              <button type="button" className="panel-link" onClick={() => setSelectedNav("Matches")}>View all</button>
             </div>
 
             <div className="match-list">
@@ -333,7 +338,7 @@ export default function AdminDashboard({
                 <p className="panel-eyebrow">Official log</p>
                 <h2>Recent decisions</h2>
               </div>
-              <button type="button" className="panel-link">Review</button>
+              <button type="button" className="panel-link" onClick={() => setSelectedNav("Reports")}>Review</button>
             </div>
 
             <div className="decision-list empty-state">
@@ -360,7 +365,9 @@ export default function AdminDashboard({
             </div>
           </div>
         </section>
+        )}
 
+        {selectedNav === "Overview" && (
         <section className="admin-panels lower-panels">
           <div className="panel panel-large">
             <div className="panel-header-row">
@@ -368,7 +375,7 @@ export default function AdminDashboard({
                 <p className="panel-eyebrow">Permissions</p>
                 <h2>Access matrix</h2>
               </div>
-              <button type="button" className="panel-link">Manage</button>
+              <button type="button" className="panel-link" onClick={() => setSelectedNav("Officials")}>Manage</button>
             </div>
 
             <div className="matrix-list">
@@ -408,6 +415,77 @@ export default function AdminDashboard({
             </div>
           </div>
         </section>
+        )}
+
+        {selectedNav === "Officials" && (
+          <section className="admin-panels">
+            <div className="panel panel-large">
+              <div className="panel-header-row">
+                <div>
+                  <p className="panel-eyebrow">Access management</p>
+                  <h2>Officials</h2>
+                </div>
+                <ShieldCheck size={18} className="insight-icon" />
+              </div>
+              <div className="empty-row">
+                <span className="decision-icon"><Users size={15} /></span>
+                <div>
+                  <strong>Signed-in administrator</strong>
+                  <span>{currentUser.name} · {currentUser.email}</span>
+                </div>
+              </div>
+              <p className="panel-note">Official account creation and role assignment are not connected to a management API yet. Access remains controlled by the existing authentication and server-side authorization.</p>
+            </div>
+          </section>
+        )}
+
+        {selectedNav === "Reports" && (
+          <section className="admin-panels">
+            <div className="panel panel-large">
+              <div className="panel-header-row">
+                <div>
+                  <p className="panel-eyebrow">Competition records</p>
+                  <h2>Reports</h2>
+                </div>
+                <FileText size={18} className="insight-icon" />
+              </div>
+              <div className="empty-row">
+                <span className="decision-icon"><FileText size={15} /></span>
+                <div>
+                  <strong>No reports available yet</strong>
+                  <span>Match history and report exports will appear here when reporting endpoints are implemented.</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {selectedNav === "Settings" && (
+          <section className="admin-panels">
+            <div className="panel panel-large">
+              <div className="panel-header-row">
+                <div>
+                  <p className="panel-eyebrow">Account and system</p>
+                  <h2>Settings</h2>
+                </div>
+                <Briefcase size={18} className="insight-icon" />
+              </div>
+              <div className="matrix-list">
+                <div className="matrix-row">
+                  <div className="matrix-role"><span className="matrix-dot" /><strong>Signed-in account</strong></div>
+                  <span>{currentUser.email}</span>
+                  <span className="member-status active">Administrator</span>
+                </div>
+                <div className="matrix-row">
+                  <div className="matrix-role"><span className="matrix-dot" /><strong>Live match API</strong></div>
+                  <span>Existing backend connection</span>
+                  <span className="member-status active">Configured</span>
+                </div>
+              </div>
+              <p className="panel-note">Security credentials and database settings are managed through server environment variables, not this browser page.</p>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
