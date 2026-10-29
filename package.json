@@ -8,14 +8,12 @@
     "dev:vercel": "npx vercel dev",
     "build": "tsc -b && tsc -p tsconfig.api.json && vite build",
     "preview": "vite preview",
-    "auth:migrate": "dotenv -e .env.local -- npx auth@latest migrate --config src/server/auth.ts --yes",
-    "auth:create-admin": "dotenv -e .env.local -- npx auth@latest create-admin --config src/server/auth.ts",
     "db:migrate": "dotenv -e .env.local -- node scripts/migrate-live-match.mjs",
     "test:backend": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
-    "better-auth": "^1.7.12",
+    "better-auth": "^1.7.14",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
