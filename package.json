@@ -1,0 +1,38 @@
+{
+  "name": "tvc-scoreboard",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "npx tsx --test tests/auth.test.ts tests/matches.test.ts tests/logic.test.ts tests/public.test.ts tests/admin-api.test.ts && npx tsx --test tests/editor-drafts-stay-private-until-saved.test.tsx && npx tsx --test tests/editor-conflicting-edits.test.tsx && npx tsx --test tests/editor-roles.test.tsx && npx tsx --test tests/publicboard.test.tsx",
+    "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
+    "admin:bootstrap": "tsx --env-file=.env.local scripts/bootstrap-admin.ts",
+    "seed:teams": "tsx --env-file=.env.local scripts/seed-teams.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "next": "^16.4.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.14",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/jsdom": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.0.0",
+    "global-jsdom": "^30.0.0",
+    "jsdom": "^30.1.3",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3"
+  }
+}
