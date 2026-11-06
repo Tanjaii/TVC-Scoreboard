@@ -8,6 +8,7 @@ create table if not exists users (
   role text not null check (role in ('admin', 'scorekeeper')),
   created_at timestamptz not null default now()
 );
+
 create unique index if not exists users_email_key on users (lower(email));
 
 create table if not exists sessions (
@@ -17,6 +18,7 @@ create table if not exists sessions (
   created_at timestamptz not null default now(),
   expires_at timestamptz not null
 );
+
 create index if not exists sessions_user_idx on sessions (user_id);
 
 -- One-time staff invitation links. Only a hash of the token is stored.
@@ -38,6 +40,7 @@ create table if not exists login_attempts (
   key text not null,
   at timestamptz not null default now()
 );
+
 create index if not exists login_attempts_key_idx on login_attempts (key, at);
 
 create table if not exists teams (
@@ -48,6 +51,7 @@ create table if not exists teams (
   info text not null default '',
   created_at timestamptz not null default now()
 );
+
 create unique index if not exists teams_name_key on teams (lower(name));
 
 create table if not exists matches (
@@ -67,6 +71,7 @@ create table if not exists matches (
   created_at timestamptz not null default now(),
   check (home_team_id <> away_team_id)
 );
+
 -- At most one match can be live at a time.
 create unique index if not exists matches_one_live on matches (status) where status = 'live';
 create index if not exists matches_schedule_idx on matches (status, scheduled_at);
