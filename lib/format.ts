@@ -1,16 +1,17 @@
 const pad = (n: number) => String(n).padStart(2, "0");
 
-/** "2d 3h 4m", "3h 04m 09s", "4m 09s", or "Starting now". */
+/** Time until a match starts, or elapsed time once its scheduled start has passed. */
 export function formatCountdown(ms: number): string {
-  if (ms <= 0) return "Starting now";
-  const total = Math.floor(ms / 1000);
+  const elapsed = ms <= 0;
+  const total = Math.floor(Math.abs(ms) / 1000);
   const d = Math.floor(total / 86400);
   const h = Math.floor((total % 86400) / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${pad(m)}m ${pad(s)}s`;
-  return `${m}m ${pad(s)}s`;
+  const duration = d > 0 ? `${d}d ${h}h ${m}m`
+    : h > 0 ? `${h}h ${pad(m)}m ${pad(s)}s`
+      : `${m}m ${pad(s)}s`;
+  return elapsed ? `Started ${duration} ago` : duration;
 }
 
 /** Shown in the visitor's own timezone. */

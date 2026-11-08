@@ -54,7 +54,9 @@ describe("public scoreboard", () => {
       results: [pm({ id: "r1", status: "completed", currentSet: null, sets: [{ type: "", home: 25, away: 18 }, { type: "", home: 25, away: 22 }], setsWon: { home: 2, away: 0 } })],
     });
     render(<PublicBoard initial={s} />);
-    assert.ok(screen.getAllByText(/^\d+h \d+m \d+s$|^\d+h \d+m$/).length >= 1);
+    assert.ok(screen.getAllByText(/^Starts in \d+h \d+m \d+s$|^Starts in \d+h \d+m$/).length >= 1);
+    assert.ok(document.querySelector(".court-card"));
+    assert.match(document.querySelector(".court-card")?.textContent ?? "", /Up next.*Titan Spikers vs Vortex Spikers/s);
     assert.ok(screen.getByText("2–0"));
     assert.ok(screen.getByText("25–22"));
   });
@@ -64,6 +66,13 @@ describe("public scoreboard", () => {
     const calls = fakeFetch(() => (healthy ? { body: snap() } : { status: 503, body: { error: "down" } }));
     render(<PublicBoard initial={null} />);
 
+    const loading = screen.getByRole("status", { name: "Loading scoreboard" });
+    const video = loading.querySelector("video")!;
+    assert.equal(video.loop, true);
+    assert.equal(video.muted, true);
+    assert.equal(video.autoplay, true);
+    assert.equal(video.playsInline, true);
+    assert.equal(video.querySelector("source")?.getAttribute("src"), "/assets/loading-animation.mp4");
     await screen.findByText(/we can’t reach the scoreboard/i);
     assert.ok(screen.getByText("Scoreboard unavailable."));
 

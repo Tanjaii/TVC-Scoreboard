@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { newMatchInput } from "@/lib/match";
 import type { Team } from "@/lib/repo/teams";
-import { fromLocalInput } from "./local-time";
+import CustomDropdown from "./CustomDropdown";
+import DateTimePicker from "./DateTimePicker";
 
 export default function NewMatchForm({ teams }: { teams: Team[] }) {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function NewMatchForm({ teams }: { teams: Team[] }) {
     const body = {
       ...newMatchInput(String(f.get("home")), String(f.get("away"))),
       stage: String(f.get("stage") ?? ""),
-      scheduledAt: fromLocalInput(String(f.get("when") ?? "")),
+      scheduledAt: String(f.get("when") ?? "") || null,
       status: previous ? "completed" : "scheduled",
     };
     try {
@@ -45,10 +46,27 @@ export default function NewMatchForm({ teams }: { teams: Team[] }) {
     <form className="panel stack" onSubmit={(e) => void submit(e)}>
       <div className="panel-head"><h2>New match</h2></div>
       <div className="grid-2">
-        <label className="field">Home team<select name="home" required defaultValue={teams[0].id}>{teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
-        <label className="field">Away team<select name="away" required defaultValue={teams[1].id}>{teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
-        <label className="field">Stage<input name="stage" maxLength={60} placeholder="e.g. Semi-final" /></label>
-        <label className="field">Date and time<input name="when" type="datetime-local" /></label>
+        <label className="field">Home team
+          <CustomDropdown label="Home team" name="home" defaultValue={teams[0].id} options={teams.map((t) => ({ value: t.id, label: t.name }))} />
+        </label>
+        <label className="field">Away team
+          <CustomDropdown label="Away team" name="away" defaultValue={teams[1].id} options={teams.map((t) => ({ value: t.id, label: t.name }))} />
+        </label>
+        <label className="field">Stage
+          <CustomDropdown
+            label="Stage"
+            name="stage"
+            defaultValue=""
+            allowCustom
+            options={[
+              { value: "", label: "No stage" },
+              ...["Group stage", "Quarter-final", "Semi-final", "Third place", "Final"].map((stage) => ({ value: stage, label: stage })),
+            ]}
+          />
+        </label>
+        <label className="field">Date and time
+          <DateTimePicker label="Date and time" name="when" defaultValue={null} />
+        </label>
       </div>
       <fieldset style={{ border: 0, padding: 0, display: "flex", gap: 20, flexWrap: "wrap" }}>
         <label><input type="radio" name="kind" value="upcoming" defaultChecked /> Upcoming match</label>

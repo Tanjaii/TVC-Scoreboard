@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { barShare, formatCountdown, formatWhen } from "@/lib/format";
 import type { PublicMatch, PublicSnapshot, PublicTeam } from "@/lib/public";
+import LoadingAnimation from "./LoadingAnimation";
 
 const POLL_MS = 5000;
 const SECTIONS = [
@@ -53,6 +54,8 @@ export default function PublicBoard({ initial }: { initial: PublicSnapshot | nul
 
   const retry = async () => { setRetrying(true); await refresh(); setRetrying(false); };
 
+  if (!snap && !failed) return <LoadingAnimation />;
+
   return (
     <>
       <header className="site-header">
@@ -82,7 +85,7 @@ export default function PublicBoard({ initial }: { initial: PublicSnapshot | nul
         )}
 
         {!snap ? (
-          <div className="panel empty">{failed ? "Scoreboard unavailable." : "Loading the scoreboard…"}</div>
+          <div className="panel empty">Scoreboard unavailable.</div>
         ) : (
           <>
             <section id="match" aria-labelledby="match-title">
@@ -129,7 +132,8 @@ function useNow(skew: React.RefObject<number>) {
 
 function Countdown({ target, skew }: { target: string; skew: React.RefObject<number> }) {
   const now = useNow(skew);
-  return <span suppressHydrationWarning>{formatCountdown(Date.parse(target) - now)}</span>;
+  const remaining = Date.parse(target) - now;
+  return <span suppressHydrationWarning>{remaining > 0 ? `Starts in ${formatCountdown(remaining)}` : formatCountdown(remaining)}</span>;
 }
 
 function LiveCentre({ snap, skew }: { snap: PublicSnapshot; skew: React.RefObject<number> }) {
@@ -145,7 +149,7 @@ function LiveCentre({ snap, skew }: { snap: PublicSnapshot; skew: React.RefObjec
             <p className="muted">Up next{next.stage ? ` · ${next.stage}` : ""}</p>
             <p className="display" style={{ fontSize: "1.8rem" }}>{next.home.name} vs {next.away.name}</p>
             {next.scheduledAt && (
-              <p>Starts in <strong className="display" style={{ fontSize: "1.6rem", color: "var(--gold)" }}><Countdown target={next.scheduledAt} skew={skew} /></strong></p>
+              <p><strong className="display" style={{ fontSize: "1.6rem", color: "var(--gold)" }}><Countdown target={next.scheduledAt} skew={skew} /></strong></p>
             )}
           </div>
         ) : <p className="muted">The next match will appear here once it is scheduled.</p>}
@@ -204,13 +208,29 @@ function Schedule({ matches, skew }: { matches: PublicMatch[]; skew: React.RefOb
       {matches.length === 0 ? <div className="empty">No upcoming matches scheduled yet.</div> : (
         <div className="list">
           {matches.map((m, i) => (
-            <div className={i === 0 ? "row next" : "row"} key={m.id}>
-              <div>
-                <div className="teams">{m.home.name} vs {m.away.name}</div>
-                <div className="meta"><span suppressHydrationWarning>{formatWhen(m.scheduledAt)}</span>{m.stage ? ` · ${m.stage}` : ""}</div>
+            i === 0 ? (
+              <div className="court-card" key={m.id}>
+                <div className="court-card-content">
+                  <p className="eyebrow">Up next</p>
+                  <div className="teams">{m.home.name} vs {m.away.name}</div>
+                  <div className="meta">
+                    <span suppressHydrationWarning>{formatWhen(m.scheduledAt)}</span>
+                    {m.stage ? ` · ${m.stage}` : ""}
+                  </div>
+                  <div className="court-count">
+                    {m.scheduledAt ? <Countdown target={m.scheduledAt} skew={skew} /> : "Time to be confirmed"}
+                  </div>
+                </div>
               </div>
-              <div className="count">{m.scheduledAt ? <Countdown target={m.scheduledAt} skew={skew} /> : "TBC"}</div>
-            </div>
+            ) : (
+              <div className="row" key={m.id}>
+                <div>
+                  <div className="teams">{m.home.name} vs {m.away.name}</div>
+                  <div className="meta"><span suppressHydrationWarning>{formatWhen(m.scheduledAt)}</span>{m.stage ? ` · ${m.stage}` : ""}</div>
+                </div>
+                <div className="count">{m.scheduledAt ? <Countdown target={m.scheduledAt} skew={skew} /> : "TBC"}</div>
+              </div>
+            )
           ))}
         </div>
       )}

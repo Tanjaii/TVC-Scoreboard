@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Invitation } from "@/lib/repo/invitations";
+import CustomDropdown from "./CustomDropdown";
 
 export default function InvitationsManager({ initial }: { initial: Invitation[] }) {
   const [list, setList] = useState(initial);
@@ -47,10 +48,15 @@ export default function InvitationsManager({ initial }: { initial: Invitation[] 
         <div className="panel-head"><h2>Create an invitation</h2></div>
         <div className="grid-2">
           <label className="field">Role
-            <select name="role" defaultValue="scorekeeper">
-              <option value="scorekeeper">Scorekeeper — scores, sets and stats</option>
-              <option value="admin">Administrator — everything, including invitations</option>
-            </select>
+            <CustomDropdown
+              label="Role"
+              name="role"
+              defaultValue="scorekeeper"
+              options={[
+                { value: "scorekeeper", label: "Scorekeeper — scores, sets and stats" },
+                { value: "admin", label: "Administrator — everything, including invitations" },
+              ]}
+            />
           </label>
           <label className="field">Who is it for? (optional note)<input name="note" maxLength={80} placeholder="e.g. Court 1 scorer" /></label>
         </div>

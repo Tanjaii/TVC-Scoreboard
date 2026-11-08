@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import MatchEditor from "../components/admin/MatchEditor";
+import DateTimePicker from "../components/admin/DateTimePicker";
 import type { MatchRecord } from "../lib/match";
 import { newMatchInput } from "../lib/match";
 import type { Team } from "../lib/repo/teams";
@@ -29,8 +30,8 @@ describe("match editor: roles", () => {
   it("scorekeepers can score but setup and history are locked", () => {
     fakeFetch(() => ({}));
     editor("scorekeeper", record({ sets: [{ type: "Men", home: 25, away: 20 }] }));
-    assert.equal((screen.getByLabelText(/^home team$/i) as HTMLSelectElement).disabled, true);
-    assert.equal((screen.getByLabelText(/^status$/i) as HTMLSelectElement).disabled, true);
+    assert.equal((screen.getByLabelText(/^home team$/i) as HTMLButtonElement).disabled, true);
+    assert.equal((screen.getByLabelText(/^status$/i) as HTMLButtonElement).disabled, true);
     assert.equal((screen.getByLabelText("Set 1 type") as HTMLInputElement).disabled, true);
     assert.equal(screen.queryByRole("button", { name: /add completed set/i }), null);
     assert.equal(screen.queryByRole("button", { name: /^remove$/i }), null);
@@ -52,9 +53,27 @@ describe("match editor: roles", () => {
     fakeFetch(() => ({}));
     editor("admin");
     // admins can change status and home team
-    assert.equal((screen.getByLabelText(/^status$/i) as HTMLSelectElement).disabled, false);
-    assert.equal((screen.getByLabelText(/^home team$/i) as HTMLSelectElement).disabled, false);
+    assert.equal((screen.getByLabelText(/^status$/i) as HTMLButtonElement).disabled, false);
+    assert.equal((screen.getByLabelText(/^home team$/i) as HTMLButtonElement).disabled, false);
     // save starts disabled
     assert.equal(saveButton().disabled, true);
+  });
+
+  it("supports custom stage entry through the floating dropdown", () => {
+    fakeFetch(() => ({}));
+    editor();
+    fireEvent.click(screen.getByRole("button", { name: "Stage" }));
+    fireEvent.change(screen.getByLabelText("Custom stage"), { target: { value: "Opening round" } });
+    fireEvent.click(screen.getByRole("button", { name: "Use" }));
+    assert.equal((screen.getByRole("button", { name: "Stage" }) as HTMLButtonElement).textContent?.includes("Opening round"), true);
+    assert.equal(saveButton().disabled, false);
+  });
+
+  it("commits date-picker selections as ISO values", () => {
+    let updated: string | null = null;
+    render(<DateTimePicker label="Scheduled start" value="2026-12-10T00:00:00.000Z" onChange={(value) => { updated = value; }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Scheduled start" }));
+    fireEvent.click(screen.getByRole("button", { name: "PM" }));
+    assert.match(updated ?? "", /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
   });
 });

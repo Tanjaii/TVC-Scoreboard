@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import { MAX_SETS, describeDifferences, finishCurrentSet, matchSchema, newMatchInput, sameInput, setsWon, withStatus } from "../lib/match";
 import { authorizeMatchChange, can } from "../lib/permissions";
+import { formatCountdown } from "../lib/format";
 import { live } from "./helpers";
 
 const A = "11111111-1111-4111-8111-111111111111";
@@ -74,5 +75,12 @@ describe("conflict summary", () => {
     assert.deepEqual(out, ["Broadcast: yours off, saved on", "Current set: yours 12–10, saved 14–10"]);
     assert.deepEqual(describeDifferences(mine, mine, () => ""), []);
     assert.equal(sameInput(mine, { ...mine }), true);
+  });
+
+  describe("match countdown", () => {
+    it("continues as an elapsed timer after the scheduled start", () => {
+      assert.equal(formatCountdown(-61_000), "Started 1m 01s ago");
+      assert.equal(formatCountdown(61_000), "1m 01s");
+    });
   });
 });

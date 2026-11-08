@@ -8,7 +8,8 @@ import {
   type MatchInput, type MatchRecord, type MatchStatus, type SetScore, type SideStats,
 } from "@/lib/match";
 import type { Team } from "@/lib/repo/teams";
-import { fromLocalInput, toLocalInput } from "./local-time";
+import CustomDropdown from "./CustomDropdown";
+import DateTimePicker from "./DateTimePicker";
 
 type Props = { initial: MatchRecord; teams: Team[]; role: Role; setTypes: string[] };
 type Message = { kind: "ok" | "error"; text: string } | null;
@@ -161,28 +162,56 @@ export default function MatchEditor({ initial, teams, role, setTypes }: Props) {
         </div>
         <div className="grid-2">
           <label className="field">Home team
-            <select disabled={!isAdmin} value={draft.homeTeamId} onChange={(e) => patch({ homeTeamId: e.target.value })}>
-              {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+            <CustomDropdown
+              label="Home team"
+              disabled={!isAdmin}
+              value={draft.homeTeamId}
+              options={teams.map((t) => ({ value: t.id, label: t.name }))}
+              onChange={(homeTeamId) => patch({ homeTeamId })}
+            />
           </label>
           <label className="field">Away team
-            <select disabled={!isAdmin} value={draft.awayTeamId} onChange={(e) => patch({ awayTeamId: e.target.value })}>
-              {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+            <CustomDropdown
+              label="Away team"
+              disabled={!isAdmin}
+              value={draft.awayTeamId}
+              options={teams.map((t) => ({ value: t.id, label: t.name }))}
+              onChange={(awayTeamId) => patch({ awayTeamId })}
+            />
           </label>
           <label className="field">Stage
-            <input disabled={!isAdmin} maxLength={60} value={draft.stage} list="stages" placeholder="e.g. Semi-final" onChange={(e) => patch({ stage: e.target.value })} />
-            <datalist id="stages"><option value="Group stage" /><option value="Quarter-final" /><option value="Semi-final" /><option value="Third place" /><option value="Final" /></datalist>
+            <CustomDropdown
+              label="Stage"
+              disabled={!isAdmin}
+              value={draft.stage}
+              allowCustom
+              options={[
+                { value: "", label: "No stage" },
+                ...["Group stage", "Quarter-final", "Semi-final", "Third place", "Final"].map((stage) => ({ value: stage, label: stage })),
+              ]}
+              onChange={(stage) => patch({ stage })}
+            />
           </label>
           <label className="field">Scheduled start (your local time)
-            <input disabled={!isAdmin} type="datetime-local" value={toLocalInput(draft.scheduledAt)} onChange={(e) => patch({ scheduledAt: fromLocalInput(e.target.value) })} />
+            <DateTimePicker
+              label="Scheduled start (your local time)"
+              disabled={!isAdmin}
+              value={draft.scheduledAt}
+              onChange={(scheduledAt) => patch({ scheduledAt })}
+            />
           </label>
           <label className="field">Status
-            <select disabled={!isAdmin} value={draft.status} onChange={(e) => changeStatus(e.target.value as MatchStatus)}>
-              <option value="scheduled">Scheduled (upcoming)</option>
-              <option value="live">Live</option>
-              <option value="completed">Completed (previous match)</option>
-            </select>
+            <CustomDropdown
+              label="Status"
+              disabled={!isAdmin}
+              value={draft.status}
+              options={[
+                { value: "scheduled", label: "Scheduled (upcoming)" },
+                { value: "live", label: "Live" },
+                { value: "completed", label: "Completed (previous match)" },
+              ]}
+              onChange={(status) => changeStatus(status as MatchStatus)}
+            />
           </label>
         </div>
         {draft.homeTeamId === draft.awayTeamId && <p className="notice error">Home and away must be different teams.</p>}
