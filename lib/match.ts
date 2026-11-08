@@ -1,13 +1,26 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const MAX_SETS = 9;
 export const MAX_SCORE = 200;
+export const DEFAULT_POINTS_TO_WIN = 25;
+export const DEFAULT_WIN_BY = 2;
 
 export const setScoreSchema = z.strictObject({
-  /** Free-text label chosen by admins, e.g. "Mixed (4 ladies + 2 men)", "Men", "Ladies". */
+  /** Free-text label chosen by admins, e.g. "Mixed", "Men", "Ladies". */
   type: z.string().trim().max(60),
   home: z.int().min(0).max(MAX_SCORE),
   away: z.int().min(0).max(MAX_SCORE),
+  /** Optional to preserve historical sets whose original rules are unknown. */
+  pointsToWin: z.int().min(1).max(MAX_SCORE).optional(),
+  winBy: z.int().min(1).max(MAX_SCORE).optional(),
+}).superRefine((set, ctx) => {
+  if ((set.pointsToWin === undefined) !== (set.winBy === undefined)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Points to win and win-by must be supplied together.",
+      path: ["pointsToWin"],
+    });
+  }
 });
 
 const sideStatsSchema = z.strictObject({
@@ -54,7 +67,24 @@ export type MatchRecord = MatchInput & {
 };
 
 export const emptySideStats = (): SideStats => ({ attackEfficiency: 0, blocks: 0, aces: 0, errors: 0 });
-export const emptySet = (): SetScore => ({ type: "", home: 0, away: 0 });
+
+/** Defaults apply only to newly created sets, never to historical records. */
+export const emptySet = (): SetScore => ({
+  type: "",
+  home: 0,
+  away: 0,
+  pointsToWin: DEFAULT_POINTS_TO_WIN,
+  winBy: DEFAULT_WIN_BY,
+});
+
+/** True when a configured target and win-by margin have both been reached. */
+export function meetsSetWinCondition(set: SetScore | null): boolean {
+  if (!set || set.pointsToWin === undefined || set.winBy === undefined) return false;
+  return (
+    (set.home >= set.pointsToWin && set.home - set.away >= set.winBy) ||
+    (set.away >= set.pointsToWin && set.away - set.home >= set.winBy)
+  );
+}
 
 export function newMatchInput(homeTeamId: string, awayTeamId: string): MatchInput {
   return {
@@ -92,7 +122,7 @@ export function withStatus(draft: MatchInput, status: MatchStatus): MatchInput {
   return { ...draft, status, sets, currentSet: null, isBroadcasting: false };
 }
 
-/** Saves the current set as completed and starts a fresh one. */
+/** Saves the current set as completed and starts a fresh one. Completion remains manual. */
 export function finishCurrentSet(draft: MatchInput): MatchInput {
   if (draft.status !== "live" || !draft.currentSet || draft.sets.length >= MAX_SETS - 1) return draft;
   return { ...draft, sets: [...draft.sets, draft.currentSet], currentSet: emptySet() };

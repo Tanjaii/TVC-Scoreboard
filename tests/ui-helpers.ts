@@ -4,6 +4,8 @@ import { afterEach } from "node:test";
 
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
 (globalThis as Record<string, unknown>).IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} };
+(globalThis as Record<string, unknown>).FormData = window.FormData;
+
 window.HTMLElement.prototype.scrollIntoView = () => {};
 
 afterEach(() => {

@@ -1,4 +1,5 @@
 const pad = (n: number) => String(n).padStart(2, "0");
+export const COUNTDOWN_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /** Time until a match starts, or elapsed time once its scheduled start has passed. */
 export function formatCountdown(ms: number): string {

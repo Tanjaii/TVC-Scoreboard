@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "npx tsx --test tests/auth.test.ts tests/matches.test.ts tests/logic.test.ts tests/public.test.ts tests/admin-api.test.ts && npx tsx --test tests/editor-drafts-stay-private-until-saved.test.tsx && npx tsx --test tests/editor-conflicting-edits.test.tsx && npx tsx --test tests/editor-roles.test.tsx && npx tsx --test tests/publicboard.test.tsx",
+    "test": "npx tsx --test tests/auth.test.ts tests/matches.test.ts tests/logic.test.ts tests/public.test.ts tests/admin-api.test.ts && npx tsx --test tests/editor-drafts-stay-private-until-saved.test.tsx && npx tsx --test tests/editor-conflicting-edits.test.tsx && npx tsx --test tests/editor-roles.test.tsx && npx tsx --test tests/new-match-form.test.tsx && npx tsx --test tests/publicboard.test.tsx",
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.mts",
     "admin:bootstrap": "tsx --env-file=.env.local scripts/bootstrap-admin.mts",
     "seed:teams": "tsx --env-file=.env.local scripts/seed-teams.mts"

@@ -270,6 +270,16 @@ label.field { display: grid; gap: 6px; color: var(--muted); font-size: 0.85rem; 
 .scorepad .steps .btn { min-height: 60px; font: 800 1.8rem var(--display); }
 .scorepad .exact { max-width: 120px; margin: 0 auto; text-align: center; }
 .setrow { display: grid; grid-template-columns: 70px 1fr 90px 90px auto; gap: 10px; align-items: center; }
+.match-kind { display: flex; flex-wrap: wrap; gap: 10px 20px; padding: 0; border: 0; }
+.match-kind legend { margin-bottom: 8px; color: var(--muted); font-size: 0.85rem; }
+.match-kind label { display: inline-flex; align-items: center; gap: 8px; }
+.match-kind input { accent-color: var(--blue); }
+.previous-match-sets { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: rgba(6, 18, 28, 0.56); }
+.previous-match-sets .panel-head { margin-bottom: 0; }
+.previous-match-sets h3 { font: 800 1.2rem/1.1 var(--display); text-transform: uppercase; }
+.previous-match-sets .muted { margin-top: 4px; font-size: 0.82rem; }
+.new-set-row { display: grid; grid-template-columns: 60px minmax(120px, 1fr) repeat(2, minmax(90px, 120px)) auto; align-items: end; gap: 10px; }
+.new-set-row > strong { align-self: center; }
 .toggle { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-soft); }
 .toggle input { width: 22px; height: 22px; }
 .table-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-soft); }
@@ -296,6 +306,8 @@ ul.plain { margin: 8px 0 0; padding-left: 18px; }
   .scorebox { order: -1; }
   .grid-2, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .setrow { grid-template-columns: 1fr 1fr; }
+  .new-set-row { grid-template-columns: 1fr 1fr; }
+  .new-set-row > strong { grid-column: 1 / -1; }
   .compare-row { grid-template-columns: 1fr 1fr; }
   .compare-row .label { grid-column: 1 / -1; order: -1; }
   .datetime-panel { grid-template-columns: 1fr; left: 50%; width: min(390px, calc(100vw - 32px)); transform-origin: top center; translate: -50% 0; }
@@ -310,6 +322,7 @@ ul.plain { margin: 8px 0 0; padding-left: 18px; }
   .grid-2 { grid-template-columns: 1fr; }
   .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .scorepad { grid-template-columns: 1fr; }
+  .new-set-row { grid-template-columns: 1fr 1fr; }
   .site-main { padding-top: 16px; }
   .site-main section + section { margin-top: 30px; }
   .section-title h2 { font-size: 1.75rem; }
