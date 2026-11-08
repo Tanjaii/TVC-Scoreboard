@@ -49,6 +49,26 @@ describe("match editor: roles", () => {
     assert.ok(screen.getByText(/unsaved changes/i));
   });
 
+  it("admins can enter results for a scheduled old match and save it as completed", async () => {
+    const scheduled = record({ status: "scheduled", currentSet: null, sets: [] });
+    const calls = fakeFetch(({ method, body }) => method === "PUT"
+      ? { body: { match: { ...scheduled, ...(body as { match: object }).match, version: 2 } } }
+      : {});
+    editor("admin", scheduled);
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter set results" }));
+    fireEvent.change(screen.getByLabelText("Set 1 Titan Spikers score"), { target: { value: "25" } });
+    fireEvent.change(screen.getByLabelText("Set 1 Vortex Spikers score"), { target: { value: "21" } });
+    assert.ok(screen.getByLabelText("Set 1 Titan Spikers score"));
+    fireEvent.click(saveButton());
+
+    await screen.findByText(/saved at .*visitors now see this version/i);
+    assert.equal(calls.filter((call) => call.method === "PUT").length, 1);
+    const payload = calls.find((call) => call.method === "PUT")?.body as { match: MatchRecord };
+    assert.equal(payload.match.status, "completed");
+    assert.deepEqual(payload.match.sets, [{ type: "", home: 25, away: 21 }]);
+  });
+
   it("admins see setup controls enabled and scorekeeper controls are disabled", () => {
     fakeFetch(() => ({}));
     editor("admin");

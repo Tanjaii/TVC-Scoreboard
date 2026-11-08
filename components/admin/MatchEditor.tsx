@@ -111,6 +111,13 @@ export default function MatchEditor({ initial, teams, role, setTypes }: Props) {
     setDraft((d) => withStatus(d, status));
   };
 
+  const addCompletedSet = () => {
+    setDraft((current) => {
+      const completed = current.status === "scheduled" ? withStatus(current, "completed") : current;
+      return { ...completed, sets: [...completed.sets, emptySet()] };
+    });
+  };
+
   const won = setsWon(draft.sets);
   const setNo = draft.sets.length + 1;
   const isLive = draft.status === "live" && draft.currentSet;
@@ -294,7 +301,12 @@ export default function MatchEditor({ initial, teams, role, setTypes }: Props) {
           <h2 id="sets-h">Completed sets</h2>
           {!isAdmin && <span className="pill">Admin only</span>}
         </div>
-        {draft.status === "scheduled" ? <p className="muted">Sets appear once the match is live or completed.</p> : (
+        {draft.status === "scheduled" ? (
+          <>
+            <p className="muted">Enter a match result to mark this match Completed and add its set scores.</p>
+            {isAdmin && <div><button className="btn small" onClick={addCompletedSet}>Enter set results</button></div>}
+          </>
+        ) : (
           <>
             {draft.sets.length === 0 && <p className="muted">No completed sets yet.</p>}
             {draft.sets.map((s, i) => (
@@ -308,7 +320,7 @@ export default function MatchEditor({ initial, teams, role, setTypes }: Props) {
             ))}
             {isAdmin && (
               <div>
-                <button className="btn small" disabled={draft.sets.length >= (draft.status === "live" ? MAX_SETS - 1 : MAX_SETS)} onClick={() => setDraft((d) => ({ ...d, sets: [...d.sets, emptySet()] }))}>Add completed set</button>
+                <button className="btn small" disabled={draft.sets.length >= (draft.status === "live" ? MAX_SETS - 1 : MAX_SETS)} onClick={addCompletedSet}>Add completed set</button>
               </div>
             )}
           </>
