@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { barShare, formatCountdown, formatWhen } from "@/lib/format";
 import type { PublicMatch, PublicSnapshot, PublicTeam } from "@/lib/public";
 import LoadingAnimation from "./LoadingAnimation";
+import { barShare, COUNTDOWN_THRESHOLD_MS, formatCountdown, formatWhen } from "@/lib/format";
 
 const POLL_MS = 5000;
 const SECTIONS = [
@@ -131,9 +131,22 @@ function useNow(skew: React.RefObject<number>) {
 }
 
 function Countdown({ target, skew }: { target: string; skew: React.RefObject<number> }) {
+  const targetMs = Date.parse(target);
+  const msLeft = targetMs - Date.now();
+
+  // Beyond 24 hours — no live ticker, just static text
+  if (msLeft > COUNTDOWN_THRESHOLD_MS) {
+    return <span suppressHydrationWarning>{formatWhen(target)}</span>;
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const now = useNow(skew);
-  const remaining = Date.parse(target) - now;
-  return <span suppressHydrationWarning>{remaining > 0 ? `Starts in ${formatCountdown(remaining)}` : formatCountdown(remaining)}</span>;
+  const remaining = targetMs - now;
+  return (
+    <span suppressHydrationWarning>
+      {remaining > 0 ? `Starts in ${formatCountdown(remaining)}` : formatCountdown(remaining)}
+    </span>
+  );
 }
 
 function LiveCentre({ snap, skew }: { snap: PublicSnapshot; skew: React.RefObject<number> }) {

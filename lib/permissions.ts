@@ -1,4 +1,4 @@
-import type { MatchInput } from "./match";
+﻿import type { MatchInput, SetScore } from "./match";
 import type { Role } from "./auth/session";
 
 export type Decision = { ok: true } | { ok: false; message: string };
@@ -17,13 +17,23 @@ export const PERMISSIONS = {
 export const can = (role: Role, permission: keyof typeof PERMISSIONS): boolean =>
   (PERMISSIONS[permission] as readonly Role[]).includes(role);
 
-const sameSet = (a: MatchInput["sets"][number], b?: MatchInput["sets"][number]) =>
-  Boolean(b) && a.type === b!.type && a.home === b!.home && a.away === b!.away;
+const sameScoringRules = (a: SetScore | null, b?: SetScore | null) =>
+  Boolean(a && b) &&
+  a!.pointsToWin === b!.pointsToWin &&
+  a!.winBy === b!.winBy;
+
+const sameSet = (a: SetScore, b?: SetScore) =>
+  Boolean(b) &&
+  a.type === b!.type &&
+  a.home === b!.home &&
+  a.away === b!.away &&
+  a.pointsToWin === b!.pointsToWin &&
+  a.winBy === b!.winBy;
 
 /**
- * Decides whether `role` may turn the saved match `before` into `after`.
- * Admins manage everything. Scorekeepers may only operate the live match:
- * current set, scores, team stats, broadcast, and appending finished sets.
+ * Admins manage everything. Scorekeepers may update live scores and stats,
+ * and append the current set to history. They cannot change setup,
+ * broadcasting, scoring rules, or existing completed sets.
  */
 export function authorizeMatchChange(role: Role, before: MatchInput, after: MatchInput): Decision {
   if (can(role, "manageMatchSetup")) return allow;
@@ -35,8 +45,26 @@ export function authorizeMatchChange(role: Role, before: MatchInput, after: Matc
   const changed = setup.find((key) => before[key] !== after[key]);
   if (changed) return deny("Only an administrator can change match setup.");
 
-  const keepsHistory = after.sets.length >= before.sets.length && before.sets.every((s, i) => sameSet(s, after.sets[i]));
+  if (before.isBroadcasting !== after.isBroadcasting) {
+    return deny("Only an administrator can control the broadcast.");
+  }
+
+  if (!sameScoringRules(before.currentSet, after.currentSet)) {
+    return deny("Only an administrator can change set scoring rules.");
+  }
+
+  const keepsHistory =
+    after.sets.length >= before.sets.length &&
+    before.sets.every((s, i) => sameSet(s, after.sets[i]));
   if (!keepsHistory) return deny("Only an administrator can change completed sets.");
+
+  // When a scorekeeper appends the current set, its scoring rules must be preserved.
+  if (
+    after.sets.length > before.sets.length &&
+    !sameScoringRules(before.currentSet, after.sets[before.sets.length])
+  ) {
+    return deny("Scorekeepers cannot change the scoring rules of a completed set.");
+  }
 
   return allow;
 }
