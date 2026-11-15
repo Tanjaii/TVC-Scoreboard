@@ -8,6 +8,7 @@ import {
   type MatchInput, type MatchRecord, type MatchStatus, type SetScore, type SideStats,
 } from "@/lib/match";
 import type { Team } from "@/lib/repo/teams";
+import { formatClock } from "@/lib/format";
 import CustomDropdown from "./CustomDropdown";
 import DateTimePicker from "./DateTimePicker";
 
@@ -15,7 +16,7 @@ type Props = { initial: MatchRecord; teams: Team[]; role: Role; setTypes: string
 type Message = { kind: "ok" | "error"; text: string } | null;
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
-const time = (iso: string) => new Date(iso).toLocaleTimeString();
+const time = formatClock;
 
 export default function MatchEditor({ initial, teams, role, setTypes }: Props) {
   const isAdmin = role === "admin";
@@ -199,9 +200,9 @@ export default function MatchEditor({ initial, teams, role, setTypes }: Props) {
               onChange={(stage) => patch({ stage })}
             />
           </label>
-          <label className="field">Scheduled start (your local time)
+          <label className="field">Scheduled start (Lagos time)
             <DateTimePicker
-              label="Scheduled start (your local time)"
+              label="Scheduled start (Lagos time)"
               disabled={!isAdmin}
               value={draft.scheduledAt}
               onChange={(scheduledAt) => patch({ scheduledAt })}

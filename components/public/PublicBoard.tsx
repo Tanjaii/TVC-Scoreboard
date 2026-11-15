@@ -6,6 +6,7 @@ import LoadingAnimation from "./LoadingAnimation";
 import { barShare, COUNTDOWN_THRESHOLD_MS, formatCountdown, formatWhen } from "@/lib/format";
 
 const POLL_MS = 5000;
+const UP_NEXT_COUNT = 2;
 const SECTIONS = [
   { id: "match", label: "Match" },
   { id: "stats", label: "Stats" },
@@ -91,7 +92,8 @@ export default function PublicBoard({ initial }: { initial: PublicSnapshot | nul
             <section id="match" aria-labelledby="match-title">
               <div className="section-title"><h2 id="match-title">Match centre</h2></div>
               <LiveCentre snap={snap} skew={skew} />
-              <Schedule matches={snap.upcoming} skew={skew} />
+              <UpNext matches={snap.upcoming.slice(0, UP_NEXT_COUNT)} skew={skew} />
+              <Schedule live={snap.live?.match ?? null} next={snap.upcoming[0] ?? null} skew={skew} />
               <Results matches={snap.results} />
             </section>
 
@@ -121,30 +123,29 @@ function Logo({ team }: { team: PublicTeam }) {
     : <div className="logo-fallback" aria-hidden>{team.shortName.slice(0, 3).toUpperCase()}</div>;
 }
 
-function useNow(skew: React.RefObject<number>) {
-  const [now, setNow] = useState(() => Date.now() + (skew.current ?? 0));
+/** Re-renders once a second while enabled, so a countdown only ticks when it has something to count. */
+function useTicker(enabled: boolean) {
+  const [, setTick] = useState(0);
   useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now() + (skew.current ?? 0)), 1000);
+    if (!enabled) return;
+    const t = window.setInterval(() => setTick((n) => n + 1), 1000);
     return () => window.clearInterval(t);
-  }, [skew]);
-  return now;
+  }, [enabled]);
 }
 
+/**
+ * Counts down only inside the 24 hours before a scheduled start. Earlier than that it shows the
+ * plain date and time. It is never rendered for a live or completed match.
+ */
 function Countdown({ target, skew }: { target: string; skew: React.RefObject<number> }) {
-  const targetMs = Date.parse(target);
-  const msLeft = targetMs - Date.now();
+  const remaining = Date.parse(target) - (Date.now() + (skew.current ?? 0));
+  const counting = remaining <= COUNTDOWN_THRESHOLD_MS;
+  useTicker(counting);
 
-  // Beyond 24 hours — no live ticker, just static text
-  if (msLeft > COUNTDOWN_THRESHOLD_MS) {
-    return <span suppressHydrationWarning>{formatWhen(target)}</span>;
-  }
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const now = useNow(skew);
-  const remaining = targetMs - now;
+  if (!counting) return <span suppressHydrationWarning>{formatWhen(target)}</span>;
   return (
     <span suppressHydrationWarning>
-      {remaining > 0 ? `Starts in ${formatCountdown(remaining)}` : formatCountdown(remaining)}
+      {remaining > 0 ? `Starts in ${formatCountdown(remaining)}` : "Starting soon"}
     </span>
   );
 }
@@ -153,19 +154,10 @@ function LiveCentre({ snap, skew }: { snap: PublicSnapshot; skew: React.RefObjec
   const live = snap.live;
 
   if (!live) {
-    const next = snap.upcoming[0];
     return (
       <div className="panel">
         <div className="centre-meta"><span className="pill">No match in progress</span></div>
-        {next ? (
-          <div className="stack">
-            <p className="muted">Up next{next.stage ? ` · ${next.stage}` : ""}</p>
-            <p className="display" style={{ fontSize: "1.8rem" }}>{next.home.name} vs {next.away.name}</p>
-            {next.scheduledAt && (
-              <p><strong className="display" style={{ fontSize: "1.6rem", color: "var(--gold)" }}><Countdown target={next.scheduledAt} skew={skew} /></strong></p>
-            )}
-          </div>
-        ) : <p className="muted">The next match will appear here once it is scheduled.</p>}
+        <p className="muted">Scores appear here as soon as a match starts.</p>
       </div>
     );
   }
@@ -214,37 +206,46 @@ function SetChips({ sets }: { sets: PublicMatch["sets"] }) {
   );
 }
 
-function Schedule({ matches, skew }: { matches: PublicMatch[]; skew: React.RefObject<number> }) {
+function UpNext({ matches, skew }: { matches: PublicMatch[]; skew: React.RefObject<number> }) {
   return (
     <div className="panel" style={{ marginTop: 16 }}>
-      <div className="panel-head"><h2>Schedule</h2></div>
+      <div className="panel-head"><h2>Up next</h2></div>
       {matches.length === 0 ? <div className="empty">No upcoming matches scheduled yet.</div> : (
         <div className="list">
-          {matches.map((m, i) => (
-            i === 0 ? (
-              <div className="court-card" key={m.id}>
-                <div className="court-card-content">
-                  <p className="eyebrow">Up next</p>
-                  <div className="teams">{m.home.name} vs {m.away.name}</div>
-                  <div className="meta">
-                    <span suppressHydrationWarning>{formatWhen(m.scheduledAt)}</span>
-                    {m.stage ? ` · ${m.stage}` : ""}
-                  </div>
-                  <div className="court-count">
-                    {m.scheduledAt ? <Countdown target={m.scheduledAt} skew={skew} /> : "Time to be confirmed"}
-                  </div>
-                </div>
+          {matches.map((m) => (
+            <div className="row" key={m.id}>
+              <div>
+                <div className="teams">{m.home.name} vs {m.away.name}</div>
+                <div className="meta"><span suppressHydrationWarning>{formatWhen(m.scheduledAt)}</span>{m.stage ? ` · ${m.stage}` : ""}</div>
               </div>
-            ) : (
-              <div className="row" key={m.id}>
-                <div>
-                  <div className="teams">{m.home.name} vs {m.away.name}</div>
-                  <div className="meta"><span suppressHydrationWarning>{formatWhen(m.scheduledAt)}</span>{m.stage ? ` · ${m.stage}` : ""}</div>
-                </div>
-                <div className="count">{m.scheduledAt ? <Countdown target={m.scheduledAt} skew={skew} /> : "TBC"}</div>
-              </div>
-            )
+              <div className="count">{m.scheduledAt ? <Countdown target={m.scheduledAt} skew={skew} /> : "TBC"}</div>
+            </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The match in play, or the next one to be played. Dimmed whenever nothing is in play. */
+function Schedule({ live, next, skew }: { live: PublicMatch | null; next: PublicMatch | null; skew: React.RefObject<number> }) {
+  const match = live ?? next;
+  return (
+    <div className={`panel schedule-panel${live ? "" : " is-idle"}`} style={{ marginTop: 16 }} data-state={live ? "live" : "idle"}>
+      <div className="panel-head"><h2>Schedule</h2></div>
+      {!match ? <div className="empty">No upcoming matches scheduled yet.</div> : (
+        <div className="court-card">
+          <div className="court-card-content">
+            <p className="eyebrow">{live ? "In play" : "Next match"}</p>
+            <div className="teams">{match.home.name} vs {match.away.name}</div>
+            <div className="meta">
+              <span suppressHydrationWarning>{formatWhen(match.scheduledAt)}</span>
+              {match.stage ? ` · ${match.stage}` : ""}
+            </div>
+            <div className="court-count">
+              {live ? <span className="pill live">Live</span> : match.scheduledAt ? <Countdown target={match.scheduledAt} skew={skew} /> : "Time to be confirmed"}
+            </div>
+          </div>
         </div>
       )}
     </div>

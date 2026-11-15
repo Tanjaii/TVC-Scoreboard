@@ -1,3 +1,5 @@
+import { LAGOS_TZ } from "./time";
+
 const pad = (n: number) => String(n).padStart(2, "0");
 export const COUNTDOWN_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -15,10 +17,17 @@ export function formatCountdown(ms: number): string {
   return elapsed ? `Started ${duration} ago` : duration;
 }
 
-/** Shown in the visitor's own timezone. */
+/** Always shown in Lagos time, on the server and in the browser, so both render the same text. */
 export function formatWhen(iso: string | null): string {
   if (!iso) return "Time to be confirmed";
-  return new Date(iso).toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleString("en-GB", {
+    timeZone: LAGOS_TZ, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true,
+  });
+}
+
+/** Clock time only, in Lagos time. */
+export function formatClock(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-GB", { timeZone: LAGOS_TZ, hour: "numeric", minute: "2-digit", hour12: true });
 }
 
 /** Share of a bar, 0 to 100. Counts compare against the larger side; efficiency maps -100..100 onto 0..100. */

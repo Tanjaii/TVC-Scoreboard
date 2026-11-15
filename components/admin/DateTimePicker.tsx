@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { fromLagosWall, lagosNowWall, LAGOS_TZ, toLagosWall } from "@/lib/time";
 
 type Props = {
   label: string;
@@ -14,30 +15,42 @@ type Props = {
 const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const pad = (value: number) => String(value).padStart(2, "0");
 
+// Everything below works on Lagos wall-clock dates: a Date whose UTC fields hold the Lagos clock reading.
+const firstOfMonth = (wall: Date) => new Date(Date.UTC(wall.getUTCFullYear(), wall.getUTCMonth(), 1));
+const monthTitle = (wall: Date) => wall.toLocaleDateString("en-GB", { timeZone: "UTC", month: "long", year: "numeric" });
+
 function formatValue(value: string | null) {
   if (!value) return "";
   const date = new Date(value);
-  const weekday = date.toLocaleDateString(undefined, { weekday: "short" });
-  const day = date.getDate();
-  const month = date.toLocaleDateString(undefined, { month: "short" });
-  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
+  const zone = { timeZone: LAGOS_TZ };
+  const weekday = date.toLocaleDateString("en-GB", { ...zone, weekday: "short" });
+  const day = date.toLocaleDateString("en-GB", { ...zone, day: "numeric" });
+  const month = date.toLocaleDateString("en-GB", { ...zone, month: "short" });
+  const time = date.toLocaleTimeString("en-GB", { ...zone, hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase();
   return `${weekday}, ${day} ${month} · ${time}`;
 }
 
-function hour12(date: Date) {
-  return date.getHours() % 12 || 12;
+function dayLabel(year: number, month: number, day: number) {
+  const date = new Date(Date.UTC(year, month, day));
+  const part = (opts: Intl.DateTimeFormatOptions) => date.toLocaleDateString("en-GB", { timeZone: "UTC", ...opts });
+  return `${part({ weekday: "long" })}, ${day} ${part({ month: "long" })} ${year}`;
 }
 
-function withTime(date: Date, hour: number, minute: number, period: "AM" | "PM") {
-  const next = new Date(date);
-  next.setHours((hour % 12) + (period === "PM" ? 12 : 0), minute, 0, 0);
+function hour12(wall: Date) {
+  return wall.getUTCHours() % 12 || 12;
+}
+
+function withTime(wall: Date, hour: number, minute: number, period: "AM" | "PM") {
+  const next = new Date(wall);
+  next.setUTCHours((hour % 12) + (period === "PM" ? 12 : 0), minute, 0, 0);
   return next;
 }
 
 export default function DateTimePicker({ label, value, defaultValue = null, onChange, disabled = false, name }: Props) {
   const [open, setOpen] = useState(false);
+  // The date being edited inside the panel. It only becomes the field's value when Select is pressed.
   const [workingDate, setWorkingDate] = useState<Date | null>(null);
-  const [month, setMonth] = useState(() => new Date());
+  const [month, setMonth] = useState(() => firstOfMonth(lagosNowWall()));
   const [clockMode, setClockMode] = useState<"hour" | "minute">("hour");
   const [localValue, setLocalValue] = useState<string | null>(defaultValue);
   const root = useRef<HTMLDivElement>(null);
@@ -66,27 +79,29 @@ export default function DateTimePicker({ label, value, defaultValue = null, onCh
   }, [open]);
 
   const begin = () => {
-    const date = selectedValue ? new Date(selectedValue) : new Date();
+    const date = selectedValue ? toLagosWall(selectedValue) : lagosNowWall();
     setWorkingDate(date);
-    setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+    setMonth(firstOfMonth(date));
     setClockMode("hour");
     setOpen(true);
   };
 
-  const commit = (date: Date) => {
-    setWorkingDate(date);
-    updateValue(date.toISOString());
+  const accept = () => {
+    if (workingDate) updateValue(fromLagosWall(workingDate));
+    setOpen(false);
   };
 
-  const period = workingDate && workingDate.getHours() >= 12 ? "PM" : "AM";
-  const startDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
-  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const year = month.getUTCFullYear();
+  const monthIndex = month.getUTCMonth();
+  const period = workingDate && workingDate.getUTCHours() >= 12 ? "PM" : "AM";
+  const startDay = month.getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
   const dateCells = Array.from({ length: 42 }, (_, index) => {
     const day = index - startDay + 1;
     return day > 0 && day <= daysInMonth ? day : null;
   });
   const clockItems = clockMode === "hour" ? Array.from({ length: 12 }, (_, i) => i + 1) : Array.from({ length: 12 }, (_, i) => i * 5);
-  const handAngle = clockMode === "hour" ? (hour12(workingDate ?? new Date()) % 12) * 30 : (workingDate?.getMinutes() ?? 0) * 6;
+  const handAngle = clockMode === "hour" ? (hour12(workingDate ?? lagosNowWall()) % 12) * 30 : (workingDate?.getUTCMinutes() ?? 0) * 6;
 
   return (
     <div className="datetime-picker" ref={root}>
@@ -110,29 +125,29 @@ export default function DateTimePicker({ label, value, defaultValue = null, onCh
         <div className="datetime-panel" id={panelId} role="dialog" aria-label={`${label} picker`}>
           <section className="calendar-pane" aria-label="Calendar">
             <div className="calendar-heading">
-              <button type="button" className="calendar-nav" aria-label="Previous month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>‹</button>
-              <strong>{month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</strong>
-              <button type="button" className="calendar-nav" aria-label="Next month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>›</button>
+              <button type="button" className="calendar-nav" aria-label="Previous month" onClick={() => setMonth(new Date(Date.UTC(year, monthIndex - 1, 1)))}>‹</button>
+              <strong>{monthTitle(month)}</strong>
+              <button type="button" className="calendar-nav" aria-label="Next month" onClick={() => setMonth(new Date(Date.UTC(year, monthIndex + 1, 1)))}>›</button>
             </div>
-            <div className="calendar-grid" role="grid" aria-label={month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}>
+            <div className="calendar-grid" role="grid" aria-label={monthTitle(month)}>
               {weekDays.map((day) => <span className="calendar-weekday" key={day} role="columnheader">{day}</span>)}
               {dateCells.map((day, index) => {
-                const isSelected = day !== null && workingDate.getFullYear() === month.getFullYear()
-                  && workingDate.getMonth() === month.getMonth() && workingDate.getDate() === day;
+                const isSelected = day !== null && workingDate.getUTCFullYear() === year
+                  && workingDate.getUTCMonth() === monthIndex && workingDate.getUTCDate() === day;
                 return day === null
                   ? <span className="calendar-empty" key={`empty-${index}`} role="gridcell" />
                   : (
                     <button
                       type="button"
                       role="gridcell"
-                      aria-label={new Date(month.getFullYear(), month.getMonth(), day).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                      aria-label={dayLabel(year, monthIndex, day)}
                       aria-selected={isSelected}
                       className={`calendar-day${isSelected ? " is-selected" : ""}`}
                       key={day}
                       onClick={() => {
                         const next = new Date(workingDate);
-                        next.setFullYear(month.getFullYear(), month.getMonth(), day);
-                        commit(next);
+                        next.setUTCFullYear(year, monthIndex, day);
+                        setWorkingDate(next);
                       }}
                     >
                       {day}
@@ -146,14 +161,14 @@ export default function DateTimePicker({ label, value, defaultValue = null, onCh
             <div className="clock-time">
               <button type="button" className={clockMode === "hour" ? "time-part is-active" : "time-part"} onClick={() => setClockMode("hour")}>{pad(hour12(workingDate))}</button>
               <span>:</span>
-              <button type="button" className={clockMode === "minute" ? "time-part is-active" : "time-part"} onClick={() => setClockMode("minute")}>{pad(workingDate.getMinutes())}</button>
+              <button type="button" className={clockMode === "minute" ? "time-part is-active" : "time-part"} onClick={() => setClockMode("minute")}>{pad(workingDate.getUTCMinutes())}</button>
             </div>
             <div className="clock-face" aria-label={clockMode === "hour" ? "Select hour" : "Select minute"}>
               <span className="clock-hand" style={{ transform: `translate(-50%, -100%) rotate(${handAngle}deg)` }} />
               <span className="clock-pin" />
               {clockItems.map((item, index) => {
                 const angle = index * 30;
-                const isSelected = clockMode === "hour" ? item === hour12(workingDate) : item === workingDate.getMinutes();
+                const isSelected = clockMode === "hour" ? item === hour12(workingDate) : item === workingDate.getUTCMinutes();
                 return (
                   <button
                     type="button"
@@ -164,10 +179,10 @@ export default function DateTimePicker({ label, value, defaultValue = null, onCh
                     aria-pressed={isSelected}
                     onClick={() => {
                       if (clockMode === "hour") {
-                        commit(withTime(workingDate, item, workingDate.getMinutes(), period));
+                        setWorkingDate(withTime(workingDate, item, workingDate.getUTCMinutes(), period));
                         setClockMode("minute");
                       } else {
-                        commit(withTime(workingDate, hour12(workingDate), item, period));
+                        setWorkingDate(withTime(workingDate, hour12(workingDate), item, period));
                       }
                     }}
                   >
@@ -183,14 +198,17 @@ export default function DateTimePicker({ label, value, defaultValue = null, onCh
                   className={period === part ? "is-selected" : ""}
                   aria-pressed={period === part}
                   key={part}
-                  onClick={() => commit(withTime(workingDate, hour12(workingDate), workingDate.getMinutes(), part))}
+                  onClick={() => setWorkingDate(withTime(workingDate, hour12(workingDate), workingDate.getUTCMinutes(), part))}
                 >
                   {part}
                 </button>
               ))}
             </div>
           </section>
-          <button type="button" className="datetime-clear" onClick={() => { updateValue(null); setOpen(false); }}>Clear date and time</button>
+          <div className="datetime-footer">
+            <span className="datetime-zone">Lagos time</span>
+            <button type="button" className="datetime-select" onClick={accept}>Select</button>
+          </div>
         </div>
       )}
     </div>

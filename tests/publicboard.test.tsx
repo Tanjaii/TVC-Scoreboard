@@ -55,10 +55,40 @@ describe("public scoreboard", () => {
     });
     render(<PublicBoard initial={s} />);
     assert.ok(screen.getAllByText(/^Starts in \d+h \d+m \d+s$|^Starts in \d+h \d+m$/).length >= 1);
-    assert.ok(document.querySelector(".court-card"));
-    assert.match(document.querySelector(".court-card")?.textContent ?? "", /Up next.*Titan Spikers vs Vortex Spikers/s);
+    assert.match(document.querySelector(".schedule-panel .court-card")?.textContent ?? "", /Next match.*Titan Spikers vs Vortex Spikers/s);
     assert.ok(screen.getByText("2–0"));
     assert.ok(screen.getByText("25–22"));
+  });
+
+  it("lists only the next two matches under Up next and never counts down beyond 24 hours", () => {
+    fakeFetch(() => ({ body: snap() }));
+    const at = (hours: number) => new Date(Date.now() + hours * 3600e3 + 30e3).toISOString();
+    const sched = (id: string, home: string, hours: number) =>
+      pm({ id, status: "scheduled", scheduledAt: at(hours), home: pteam(id, home), sets: [], currentSet: null, stats: null });
+    const s = snap({ live: null, upcoming: [sched("a", "Alpha", 2), sched("b", "Bravo", 30), sched("c", "Charlie", 50)] });
+    render(<PublicBoard initial={s} />);
+
+    const upNext = screen.getByRole("heading", { name: "Up next" }).closest(".panel") as HTMLElement;
+    assert.equal(upNext.querySelectorAll(".row").length, 2);
+    assert.ok(within(upNext).getByText(/Alpha/));
+    assert.ok(within(upNext).getByText(/Bravo/));
+    assert.equal(within(upNext).queryByText(/Charlie/), null);
+    assert.equal(within(upNext).getAllByText(/^Starts in /).length, 1); // only the match inside 24h ticks
+  });
+
+  it("dims Schedule while nothing is in play and shows the live match, undimmed, once one starts", () => {
+    fakeFetch(() => ({ body: snap() }));
+    const upcoming = [pm({ id: "u1", status: "scheduled", scheduledAt: new Date(Date.now() + 3600e3).toISOString(), sets: [], currentSet: null, stats: null })];
+    const { unmount } = render(<PublicBoard initial={snap({ live: null, upcoming })} />);
+    assert.ok(document.querySelector(".schedule-panel.is-idle"));
+    unmount();
+
+    render(<PublicBoard initial={snap({ upcoming })} />);
+    const schedule = document.querySelector(".schedule-panel") as HTMLElement;
+    assert.ok(schedule);
+    assert.equal(schedule.classList.contains("is-idle"), false);
+    assert.match(schedule.textContent ?? "", /In play.*Titan Spikers vs Vortex Spikers/s);
+    assert.equal(within(schedule).queryByText(/Starts in/), null); // no timer once the match is live
   });
 
   it("shows a connection error with Retry, keeps old data, and recovers", async () => {

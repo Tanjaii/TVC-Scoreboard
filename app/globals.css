@@ -144,8 +144,10 @@ label.field { display: grid; gap: 6px; color: var(--muted); font-size: 0.85rem; 
 .ampm-toggle { display: flex; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: rgba(6, 18, 28, 0.72); }
 .ampm-toggle button { padding: 5px 11px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font: 700 0.8rem var(--body); cursor: pointer; }
 .ampm-toggle button.is-selected { background: var(--blue); color: #fff; }
-.datetime-clear { grid-column: 1 / -1; justify-self: end; padding: 4px 0; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 0.8rem; cursor: pointer; }
-.datetime-clear:hover { color: var(--text); }
+.datetime-footer { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.datetime-zone { color: var(--muted); font-size: 0.8rem; }
+.datetime-select { min-height: 36px; padding: 0 20px; border: 1px solid var(--gold); border-radius: 10px; background: var(--gold); color: #1b1405; font: 700 0.85rem var(--body); cursor: pointer; transition: filter 120ms ease-out; }
+.datetime-select:hover { filter: brightness(1.08); }
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .notice { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-soft); }
@@ -201,6 +203,8 @@ label.field { display: grid; gap: 6px; color: var(--muted); font-size: 0.85rem; 
 .court-card .eyebrow { color: var(--gold); }
 .court-card .teams { font: 800 clamp(1.7rem, 5vw, 2.8rem)/1.1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
 .court-card .meta { color: #d3e2f2; font-size: 0.9rem; }
+.schedule-panel { transition: opacity 400ms ease-out; }
+.schedule-panel.is-idle { opacity: 0.6; }
 .court-count { margin-top: 4px; color: var(--gold); font: 800 clamp(1.4rem, 4vw, 2.1rem)/1.1 var(--display); font-variant-numeric: tabular-nums; }
 .result-score { font: 800 1.5rem var(--display); text-align: right; }
 
@@ -311,7 +315,6 @@ ul.plain { margin: 8px 0 0; padding-left: 18px; }
   .compare-row { grid-template-columns: 1fr 1fr; }
   .compare-row .label { grid-column: 1 / -1; order: -1; }
   .datetime-panel { grid-template-columns: 1fr; left: 50%; width: min(390px, calc(100vw - 32px)); transform-origin: top center; translate: -50% 0; }
-  .datetime-clear { grid-column: 1; }
   .court-card { min-height: 320px; padding: 18px; }
   .compare-row .val { font-size: 1.35rem; }
   .conn { align-items: stretch; }

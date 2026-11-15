@@ -16,7 +16,8 @@ export default function NewMatchForm({ teams }: { teams: Team[] }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [kind, setKind] = useState<"upcoming" | "previous">("upcoming");
-  const [sets, setSets] = useState<SetDraft[]>([emptySetDraft()]);
+  const [sets, setSets] = useState<SetDraft[]>([]);
+  const [notice, setNotice] = useState("");
 
   if (teams.length < 2) {
     return <p className="notice warn">Add at least two teams under Teams before creating a match.</p>;
@@ -48,7 +49,21 @@ export default function NewMatchForm({ teams }: { teams: Team[] }) {
     try {
       const res = await fetch("/api/admin/matches", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json().catch(() => ({}));
-      if (res.ok) { router.push(`/admin/matches/${data.match.id}`); return; }
+      if (res.ok) {
+        if (previous) {
+          // A recorded (previous) match is finished business: stay on the admin page and refresh its list.
+          setOpen(false);
+          setKind("upcoming");
+          setSets([]);
+          setNotice("Match recorded.");
+          setBusy(false);
+          router.push("/admin");
+          router.refresh();
+        } else {
+          router.push(`/admin/matches/${data.match.id}`);
+        }
+        return;
+      }
       setError(data.issues?.map((i: { message: string }) => i.message).join(" ") || data.error || "Could not create the match.");
     } catch {
       setError("Could not reach the server. Try again.");
@@ -56,7 +71,14 @@ export default function NewMatchForm({ teams }: { teams: Team[] }) {
     setBusy(false);
   };
 
-  if (!open) return <div><button className="btn primary" onClick={() => setOpen(true)}>New match</button></div>;
+  if (!open) {
+    return (
+      <div className="stack">
+        {notice && <p className="notice ok" role="status">{notice}</p>}
+        <div><button className="btn primary" onClick={() => { setNotice(""); setOpen(true); }}>New match</button></div>
+      </div>
+    );
+  }
 
   return (
     <form className="panel stack" onSubmit={(e) => void submit(e)}>
@@ -94,10 +116,11 @@ export default function NewMatchForm({ teams }: { teams: Team[] }) {
           <div className="panel-head">
             <div>
               <h3 id="previous-sets-heading">Set results</h3>
-              <p className="muted">Enter the score for each set played in this match.</p>
+              <p className="muted">Add each set played in this match, then enter its score.</p>
             </div>
             <span className="pill">{sets.length} / {MAX_SETS} sets</span>
           </div>
+          {sets.length === 0 && <p className="muted">No sets added yet.</p>}
           {sets.map((set, index) => (
             <div className="new-set-row" key={index}>
               <strong>Set {index + 1}</strong>
@@ -136,17 +159,15 @@ export default function NewMatchForm({ teams }: { teams: Team[] }) {
                   onChange={(event) => setSets((current) => current.map((item, i) => i === index ? { ...item, away: event.target.value } : item))}
                 />
               </label>
-              {sets.length > 1 && (
-                <button type="button" className="btn small danger" aria-label={`Remove set ${index + 1}`} onClick={() => setSets((current) => current.filter((_, i) => i !== index))}>
-                  Remove
-                </button>
-              )}
+              <button type="button" className="btn small danger" aria-label={`Remove set ${index + 1}`} onClick={() => setSets((current) => current.filter((_, i) => i !== index))}>
+                Remove
+              </button>
             </div>
           ))}
           <datalist id="set-types"><option value="Men" /><option value="Ladies" /><option value="Mixed" /></datalist>
           <div>
             <button type="button" className="btn small" disabled={sets.length >= MAX_SETS} onClick={() => setSets((current) => [...current, emptySetDraft()])}>
-              Add set
+              Add completed set
             </button>
           </div>
         </section>

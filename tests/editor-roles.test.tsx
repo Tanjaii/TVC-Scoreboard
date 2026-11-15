@@ -94,6 +94,8 @@ describe("match editor: roles", () => {
     render(<DateTimePicker label="Scheduled start" value="2026-12-10T00:00:00.000Z" onChange={(value) => { updated = value; }} />);
     fireEvent.click(screen.getByRole("button", { name: "Scheduled start" }));
     fireEvent.click(screen.getByRole("button", { name: "PM" }));
-    assert.match(updated ?? "", /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    assert.equal(updated, null); // nothing is applied until Select is pressed
+    fireEvent.click(screen.getByRole("button", { name: "Select" }));
+    assert.equal(updated, "2026-12-10T12:00:00.000Z"); // 1:00 AM Lagos on the 10th, moved to 1:00 PM Lagos = 12:00 UTC
   });
 });
