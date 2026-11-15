@@ -3,8 +3,15 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
   title: "TVC Volleyball Championship · Live Scoreboard",
   description: "Live scores, schedule and team statistics for the TVC Volleyball Championship.",
+  openGraph: {
+    title: "TVC Volleyball Championship · Live Scoreboard",
+    description: "Live scores, schedule and team statistics.",
+    siteName: "TVC Volleyball",
+    type: "website",
+  },
 };
 export const viewport: Viewport = { themeColor: "#06151f" };
 
